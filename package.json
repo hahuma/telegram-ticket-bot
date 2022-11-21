@@ -5,13 +5,19 @@
   "main": "index.js",
   "author": "Petterson Firmino da Silva",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
   },
   "type": "module",
   "license": "MIT",
   "private": false,
   "dependencies": {
     "dotenv": "^16.0.3",
-    "telegraf": "^4.11.1"
+    "luxon": "^3.1.0",
+    "telegraf": "^4.11.1",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
   }
 }
