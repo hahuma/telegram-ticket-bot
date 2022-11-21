@@ -1,66 +1,57 @@
 import { DateTime } from "luxon";
 import { Telegraf } from "telegraf";
 import { v4 as uuid } from "uuid";
+
+import { questions } from "../vizualizer/questions.js";
 import { ticket } from "../vizualizer/ticket.js";
 
 const defaultTicket = {
+  id: "",
   name: "",
   odd: "",
   market: "",
   value: "",
   buyerName: "",
-  sellerName: "",
+  sellerName: "M7 Bet",
   createdAt: "",
 };
 
 export class TelegramBot {
   constructor({ botToken }) {
-    this.id = uuid();
     this.botToken = botToken;
     this.step = 0;
     this.lastMessageId = undefined;
     this.bot = new Telegraf(this.botToken);
-    this.questionsObj = {
-      default: "Olá, para dar início ao seu atendimento, digite *iniciar*",
-      start: `Este e seu id de acesso, deixe guardado com voce para acessar nas proximas vezes: ${this.id}`,
-      continue:
-        "Seu atendimento ja foi iniciado, peco que continue o fluxo normalmente",
-      passo1:
-        "Vamos dar inicio, primeiro preciso que voce digite que aposta esta sendo criada:",
-      passo2: "Qual o odd da aposta?",
-      passo3: "Qual o valor apostado?",
-      passo4: "Qual o mercado?",
-      passo5: "Qual o colaborador?",
-      passo6: "Seu nome:",
-      passo7: "Imprimindo seu bilhete em tela...",
-    };
+    this.questionsObj = questions;
     this.ticket = defaultTicket;
 
     this.init();
     this.#middlewares();
     this.#events();
+    this.#commands();
+    this.#help();
 
     this.bot.startPolling();
   }
 
   init() {
     this.bot.start((content) => {
-      content.reply(this.questionsObj.start);
+      content.reply(this.questionsObj.default);
     });
   }
 
   #middlewares() {
     this.bot.on("text", (content, next) => {
-      if (this.step === 0 && content.message.text !== "iniciar") {
-        content.replyWithMarkdownV2(this.questionsObj.default);
+      if (this.step !== 0 && content.message.text === "iniciar") {
+        content.replyWithMarkdownV2(this.questionsObj.continue);
       }
 
       next();
     });
 
     this.bot.on("text", (content, next) => {
-      if (this.step !== 0 && content.message.text === "iniciar") {
-        content.replyWithMarkdownV2(this.questionsObj.continue);
+      if (this.step === 0 && content.message.text.toLowerCase() !== "iniciar") {
+        content.replyWithMarkdownV2(this.questionsObj.default);
       }
 
       next();
@@ -155,33 +146,16 @@ export class TelegramBot {
     });
 
     this.bot.on("text", (content, next) => {
-      if (
-        this.step === 6 &&
-        this.lastMessageId !== content.message.message_id
-      ) {
-        this.ticket.sellerName = content.message.text;
-
-        this.#updateStepAndLastMessageId({
-          step: 7,
-          lastMessageId: content.message.message_id,
-        });
-      }
-
-      next();
-    });
-
-    this.bot.on("text", (content, next) => {
-      if (
-        this.step === 7 &&
-        this.lastMessageId === content.message.message_id
-      ) {
+      if (this.step === 6) {
         this.ticket.createdAt = DateTime.now()
           .setLocale("pt-BR")
           .toFormat("dd / MM / yyyy       hh:mm");
 
+        this.ticket.id = uuid();
+
         content.replyWithMarkdownV2(ticket(this.ticket));
         content.reply(
-          `Atendimento, finalizado! Obrigado ${this?.ticket?.sellerName}`
+          `Atendimento, finalizado! Obrigado ${this?.ticket?.sellerName}!`
         );
 
         this.ticket = defaultTicket;
@@ -194,8 +168,8 @@ export class TelegramBot {
   }
 
   #events() {
-    this.bot.hears("iniciar", (content, next) => {
-      if (this.step === 0) {
+    this.bot.on("text", (content, next) => {
+      if (this.step === 0 && content.message.text.toLowerCase() === "iniciar") {
         content.reply(this.questionsObj.passo1);
 
         this.#updateStepAndLastMessageId({
@@ -203,6 +177,27 @@ export class TelegramBot {
           lastMessageId: content.message.message_id,
         });
       }
+      next();
+    });
+  }
+
+  #help() {
+    this.bot.help((content) => {
+      content.replyWithMarkdownV2(`
+        Lista de comandos disponíveis:
+
+        *iniciar* \\=\\> Dá início ao atendimento
+        */iniciar* \\=\\> Dá início ao atendimento
+        */help* \\=\\> Mostrar essa mensagem
+
+        `);
+    });
+  }
+
+  #commands() {
+    this.bot.command("/iniciar", (content, next) => {
+      content.reply(this.questionsObj.passo1);
+
       next();
     });
   }

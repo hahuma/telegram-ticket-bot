@@ -3,6 +3,6 @@ import { TelegramBot } from "./classes/TelegramBot.js";
 
 dotenv.config();
 
-const { API_TOKEN } = process.env;
+const { BOT_TOKEN } = process.env;
 
-new TelegramBot({ botToken: API_TOKEN });
+new TelegramBot({ botToken: BOT_TOKEN });
