@@ -12,7 +12,7 @@ const defaultTicket = {
   market: "",
   value: "",
   buyerName: "",
-  sellerName: "M7 Bet",
+  sellerName: process.env.SELLER_NAME,
   createdAt: "",
 };
 
