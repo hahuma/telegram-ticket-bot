@@ -154,13 +154,46 @@ export class TelegramBot {
         this.ticket.id = uuid();
 
         content.replyWithMarkdownV2(ticket(this.ticket));
+
+        this.#updateStepAndLastMessageId({
+          step: 7,
+          lastMessageId: content.message.message_id,
+        });
+      }
+
+      next();
+    });
+
+    this.bot.on("text", (content, next) => {
+      if (this.step === 7) {
+        content.replyWithMarkdownV2(
+          "Reutilizar informação do bilhete? Digite *1* para *SIM* e *2* para *NÃO*"
+        );
+
+        this.#updateStepAndLastMessageId({
+          step: 8,
+          lastMessageId: content.message.message_id,
+        });
+      }
+
+      next();
+    });
+
+    this.bot.on("text", (content, next) => {
+      console.log(content.message.text);
+      if (this.step === 8 && content.message.text == "1") {
+        this.#updateStepAndLastMessageId({
+          step: 4,
+          lastMessageId: content.message.message_id,
+        });
+      }
+
+      if (this.step === 8 && content.message.text == "2") {
         content.reply(
           `Atendimento, finalizado! Obrigado ${this?.ticket?.sellerName}!`
         );
 
-        this.ticket = defaultTicket;
-
-        this.#updateStepAndLastMessageId({});
+        this.#updateStepAndLastMessageId();
       }
 
       next();

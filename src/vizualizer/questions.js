@@ -10,6 +10,5 @@ export const questions = {
   passo3: "Qual o valor apostado?",
   passo4: "Qual o mercado?",
   passo5: "Qual o colaborador?",
-  passo6: "Seu nome:",
-  passo7: "Imprimindo seu bilhete em tela...",
+  passo6: "Imprimindo seu bilhete em tela...",
 };
