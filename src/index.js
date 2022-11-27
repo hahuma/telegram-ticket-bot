@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
-import { TelegramBot } from "./classes/TelegramBot.js";
-
 dotenv.config();
+
+import { TelegramBot } from "./classes/TelegramBot.js";
 
 const { BOT_TOKEN } = process.env;
 

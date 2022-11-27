@@ -1,6 +1,8 @@
 import { DateTime } from "luxon";
 import { Telegraf } from "telegraf";
 import { v4 as uuid } from "uuid";
+import dotenv from "dotenv";
+dotenv.config();
 
 import { questions } from "../vizualizer/questions.js";
 import { ticket } from "../vizualizer/ticket.js";
@@ -19,6 +21,7 @@ const defaultTicket = {
 export class TelegramBot {
   constructor({ botToken }) {
     this.botToken = botToken;
+    this.chatId = "";
     this.step = 0;
     this.lastMessageId = undefined;
     this.bot = new Telegraf(this.botToken);
@@ -37,6 +40,7 @@ export class TelegramBot {
   init() {
     this.bot.start((content) => {
       content.reply(this.questionsObj.default);
+      this.chatId = content.chat.id;
     });
   }
 
@@ -180,10 +184,11 @@ export class TelegramBot {
     });
 
     this.bot.on("text", (content, next) => {
-      console.log(content.message.text);
       if (this.step === 8 && content.message.text == "1") {
+        content.reply(this.questionsObj.passo5);
+
         this.#updateStepAndLastMessageId({
-          step: 4,
+          step: 9,
           lastMessageId: content.message.message_id,
         });
       }
@@ -193,7 +198,38 @@ export class TelegramBot {
           `Atendimento, finalizado! Obrigado ${this?.ticket?.sellerName}!`
         );
 
-        this.#updateStepAndLastMessageId();
+        this.#updateStepAndLastMessageId({});
+      }
+
+      next();
+    });
+
+    this.bot.on("text", (content, next) => {
+      if (
+        this.step === 9 &&
+        this.lastMessageId !== content.message.message_id
+      ) {
+        this.ticket.buyerName = content.message.text;
+
+        this.ticket.createdAt = DateTime.now()
+          .setLocale("pt-BR")
+          .toFormat("dd / MM / yyyy       hh:mm");
+
+        this.ticket.id = uuid();
+
+        content.replyWithMarkdownV2(ticket(this.ticket));
+        setTimeout(
+          () =>
+            content.replyWithMarkdownV2(
+              "Reutilizar informação do bilhete? Digite *1* para *SIM* e *2* para *NÃO*"
+            ),
+          100
+        );
+
+        this.#updateStepAndLastMessageId({
+          step: 8,
+          lastMessageId: content.message.message_id,
+        });
       }
 
       next();
